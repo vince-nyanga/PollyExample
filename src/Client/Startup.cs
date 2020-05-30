@@ -1,6 +1,5 @@
 using System;
 using System.Net.Http;
-using System.Threading.Tasks;
 using Client.Interfaces;
 using Client.Services;
 using Microsoft.AspNetCore.Builder;
@@ -24,7 +23,6 @@ namespace Client
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
@@ -33,34 +31,7 @@ namespace Client
             {
                 client.BaseAddress = new Uri("https://localhost:5001/");
             })
-                .AddPolicyHandler(GetRetryPolicy())
-                .AddPolicyHandler(GetCircuitBreakerPolicy());
-        }
-
-        private IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
-        {
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .AdvancedCircuitBreakerAsync(
-                     failureThreshold: 0.5,
-                     samplingDuration: TimeSpan.FromSeconds(5),
-                     minimumThroughput: 2,
-                     durationOfBreak: TimeSpan.FromSeconds(30), onBreak: OnBreak, onHalfOpen: OnHalfOpen, onReset: OnReset);
-        }
-
-        private void OnReset()
-        {
-            Log.Information("Circuit breaker onReset");
-        }
-
-        private void OnHalfOpen()
-        {
-            Log.Information("Circuit breaker onHalfOpen");
-        }
-
-        private void OnBreak(DelegateResult<HttpResponseMessage> arg1, TimeSpan arg2)
-        {
-            Log.Information("Circuit breaker onBreak");
+                .AddPolicyHandler(GetRetryPolicy());
         }
 
         private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
@@ -80,8 +51,6 @@ namespace Client
 
         }
 
-      
-        // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())
