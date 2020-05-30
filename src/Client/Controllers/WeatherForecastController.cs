@@ -23,13 +23,17 @@ namespace Client.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<WeatherForecast>>> Get()
         {
+            _logger.LogInformation("Fetching weather from API");
+
             var forecast = await _service.GetWeatherForecast();
             if (forecast != null)
             {
+                _logger.LogInformation("Weather successfully fetched");
                 return Ok(forecast);
             }
             else
             {
+                _logger.LogInformation("Failed to fetch weather");
                 return NotFound();
             }
         }

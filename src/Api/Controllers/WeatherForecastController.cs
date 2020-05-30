@@ -33,6 +33,7 @@ namespace Api.Controllers
                     .ToArray()
                 );
             }
+
             return NotFound();
         }
     }
