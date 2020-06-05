@@ -29,7 +29,7 @@ namespace Client
 
             services.AddHttpClient<IWeatherService, HttpWeatherService>(client =>
             {
-                client.BaseAddress = new Uri("https://localhost:5001/");
+                client.BaseAddress = new Uri(Configuration.GetValue<string>("ApiUrl"));
             })
                 .AddPolicyHandler(GetRetryPolicy());
         }
