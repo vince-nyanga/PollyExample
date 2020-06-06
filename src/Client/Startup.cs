@@ -31,24 +31,49 @@ namespace Client
             {
                 client.BaseAddress = new Uri(Configuration.GetValue<string>("ApiUrl"));
             })
-                .AddPolicyHandler(GetRetryPolicy());
+                .AddPolicyHandler(GetCircuitBreakerPolicy());
         }
 
-        private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+        private IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
         {
-            Random jitterer = new Random();
             return HttpPolicyExtensions
-                 .HandleTransientHttpError()
-                 .OrResult(res => !res.IsSuccessStatusCode)
-                 .WaitAndRetryAsync(
-                      2,
-                     retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
-                                                           + TimeSpan.FromMilliseconds(jitterer.Next(0, 1000)),
-                     onRetry: (response, span, retryCount, context) =>
-                     {
-                         Log.Information("Retry count: {RetryCount}", retryCount);
-                     });
+                .HandleTransientHttpError()
+                .CircuitBreakerAsync(
+                    handledEventsAllowedBeforeBreaking: 2,
+                    durationOfBreak: TimeSpan.FromSeconds(5),
+                    onBreak: OnBreak,
+                    onReset: OnReset,
+                    onHalfOpen: OnHalfOpen);
+        }
 
+        private IAsyncPolicy<HttpResponseMessage> GetAdvancedCircuitBreakerPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .AdvancedCircuitBreakerAsync(
+                    failureThreshold: 0.5,
+                    samplingDuration: TimeSpan.FromSeconds(30),
+                    minimumThroughput: 10,
+                    durationOfBreak: TimeSpan.FromSeconds(5),
+                    onBreak: OnBreak,
+                    onReset: OnReset,
+                    onHalfOpen: OnHalfOpen);
+        }
+
+        private void OnHalfOpen()
+        {
+            Log.Information("Circuit is Half Open");
+        }
+
+        private void OnReset()
+        {
+            Log.Information("Circuit reset");
+
+        }
+
+        private void OnBreak(DelegateResult<HttpResponseMessage> responseDelegate, TimeSpan arg2)
+        {
+            Log.Information("Circuit is Broken");
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

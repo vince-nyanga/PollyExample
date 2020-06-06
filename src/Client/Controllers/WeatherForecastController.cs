@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Net;
 using System.Threading.Tasks;
 using Client.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -25,16 +27,25 @@ namespace Client.Controllers
         {
             _logger.LogInformation("Fetching weather from API");
 
-            var forecast = await _service.GetWeatherForecast();
-            if (forecast != null)
+            try
             {
-                _logger.LogInformation("Weather successfully fetched");
-                return Ok(forecast);
+
+                var forecast = await _service.GetWeatherForecast();
+                if (forecast != null)
+                {
+                    _logger.LogInformation("Weather successfully fetched");
+                    return Ok(forecast);
+                }
+                else
+                {
+                    _logger.LogInformation("Failed to fetch weather");
+                    return NotFound();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogInformation("Failed to fetch weather");
-                return NotFound();
+                _logger.LogError("Failed to get weather");
+                return StatusCode(500, new { Error = "Something happened" });
             }
         }
     }
