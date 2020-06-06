@@ -46,20 +46,6 @@ namespace Client
                     onHalfOpen: OnHalfOpen);
         }
 
-        private IAsyncPolicy<HttpResponseMessage> GetAdvancedCircuitBreakerPolicy()
-        {
-            return HttpPolicyExtensions
-                .HandleTransientHttpError()
-                .AdvancedCircuitBreakerAsync(
-                    failureThreshold: 0.5,
-                    samplingDuration: TimeSpan.FromSeconds(30),
-                    minimumThroughput: 10,
-                    durationOfBreak: TimeSpan.FromSeconds(5),
-                    onBreak: OnBreak,
-                    onReset: OnReset,
-                    onHalfOpen: OnHalfOpen);
-        }
-
         private void OnHalfOpen()
         {
             Log.Information("Circuit is Half Open");
@@ -75,6 +61,22 @@ namespace Client
         {
             Log.Information("Circuit is Broken");
         }
+
+        // Advanced circuit breaker
+        private IAsyncPolicy<HttpResponseMessage> GetAdvancedCircuitBreakerPolicy()
+        {
+            return HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .AdvancedCircuitBreakerAsync(
+                    failureThreshold: 0.5,
+                    samplingDuration: TimeSpan.FromSeconds(30),
+                    minimumThroughput: 10,
+                    durationOfBreak: TimeSpan.FromSeconds(5),
+                    onBreak: OnBreak,
+                    onReset: OnReset,
+                    onHalfOpen: OnHalfOpen);
+        }
+
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
